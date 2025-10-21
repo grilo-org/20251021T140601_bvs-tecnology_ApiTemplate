@@ -1,0 +1,40 @@
+
+name: Grilo SC Analysis for .NET
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch: {}
+
+jobs:
+  sonar-analysis:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install SonarScanner for .NET
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Begin SonarScanner step
+        run: |
+          dotnet sonarscanner begin /k:"grilo-org_20251021T140601_bvs-tecnology_ApiTemplate" /o:"grilo-org" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.login="${{ env.SONAR_TOKEN }}"
+
+      - name: Build the project
+        run: dotnet build --no-incremental
+
+      - name: End SonarScanner step
+        run: dotnet sonarscanner end /d:sonar.login="${{ env.SONAR_TOKEN }}"
